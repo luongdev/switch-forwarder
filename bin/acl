@@ -1,0 +1,99 @@
+#!/bin/bash
+
+CONF_DIR="/etc/switch/conf"
+PASS_FILE="/var/run/.pass"
+FILE_NAME="$CONF_DIR/autoload_configs/acl.conf.xml"
+
+SOCKETS_RN=$(sed -n '/<list name="socket_acl" default=".*">/=' "$FILE_NAME" | head -n 1)
+PROVIDERS_RN=$(sed -n '/<list name="providers" default=".*">/=' "$FILE_NAME" | head -n 1)
+
+reload_acl() {
+    PWD="$(cat $PASS_FILE)"
+    PWD=${PWD:-Default#Switch@6699}
+
+    fs_cli -p $PWD -x "reloadacl"
+}
+
+add_provider() {
+    local cidr="$1"
+    if [[ ! "$cidr" =~ / ]]; then
+        cidr="$cidr/32"
+    fi
+    sed -i "${PROVIDERS_RN}a\ \t<node type=\"allow\" cidr=\"$cidr\"/>" "$FILE_NAME"
+    echo "Added acl for provider with CIDR $cidr"
+}
+
+del_provider() {
+    local cidr="$1"
+    local has_subnet="0"
+    if [[ "$cidr" =~ / ]]; then
+        has_subnet="1"
+    fi
+    local formatted_cidr=$(echo "$cidr" | sed 's/\./\\./g; s/\//\\\//g')
+    if [[ "$has_subnet" = "0" ]]; then
+        sed -i "/<list name=\"providers\" default=\".*\">/,/<\/list>/ s/<node type=\".*\" cidr=\"$formatted_cidr\/.*\"\/>//" "$FILE_NAME"
+    else
+        sed -i "/<list name=\"providers\" default=\".*\">/,/<\/list>/ s/<node type=\".*\" cidr=\"$formatted_cidr\"\/>//" "$FILE_NAME"
+    fi
+    
+    echo "Deleted acl of provider with CIDR $cidr"
+}
+
+add_esl() {
+    local cidr="$1"
+    if [[ ! "$cidr" =~ / ]]; then
+        cidr="$cidr/32"
+    fi
+
+    if [[ "$cidr" =~ "127.0.0.1" ]]; then
+        exit 1
+    fi
+
+    sed -i "${SOCKETS_RN}a\ \t<node type=\"allow\" cidr=\"$cidr\"/>" "$FILE_NAME"
+    echo "Added acl for socket with CIDR $cidr"
+}
+
+del_esl() {
+    local cidr="$1"
+    local has_subnet="0"
+    if [[ "$cidr" =~ / ]]; then
+        has_subnet="1"
+    fi
+
+    if [[ "$cidr" =~ "127.0.0.1" ]]; then
+        exit 1
+    fi
+
+    local formatted_cidr=$(echo "$cidr" | sed 's/\./\\./g; s/\//\\\//g')
+    if [[ "$has_subnet" = "0" ]]; then
+        sed -i "/<list name=\"socket_acl\" default=\".*\">/,/<\/list>/ s/<node type=\".*\" cidr=\"$formatted_cidr\/.*\"\/>//" "$FILE_NAME"
+    else
+        sed -i "/<list name=\"socket_acl\" default=\".*\">/,/<\/list>/ s/<node type=\".*\" cidr=\"$formatted_cidr\"\/>//" "$FILE_NAME"
+    fi
+    
+    echo "Deleted acl of socket with CIDR $cidr"
+}
+
+if [[ "$1" == "provider" ]]; then
+    if [[ "$2" == "add" && ! -z "$3" ]]; then
+        add_provider "$3"
+        reload_acl
+    elif [[ "$2" == "del" && ! -z "$3" ]]; then
+        del_provider "$3"
+        reload_acl
+    else
+        echo "Usage: $0 provider add|del [CIDR]"
+        exit 1
+    fi
+elif [[ "$1" == "socket" ]]; then
+    if [[ "$2" == "add" && ! -z "$3" ]]; then
+        add_esl "$3"
+        reload_acl
+    elif [[ "$2" == "del" && ! -z "$3" ]]; then
+        del_esl "$3"
+        reload_acl
+    else
+        echo "Usage: $0 acl add|del [CIDR]"
+        exit 1
+    fi
+fi

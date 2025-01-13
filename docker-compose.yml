@@ -1,0 +1,26 @@
+services:
+  freeswitch:
+    image: simplefs/forwarder
+    container_name: forwarder
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "2048m"
+    environment:
+      DB_HOST: ""
+      DB_PORT: 5432
+      DB_USER: ""
+      DB_PASS: ""
+    volumes:
+      - "./conf:/opt/switch/conf"
+    command: 
+      - "freeswitch"
+      - "--rtp-range-start"
+      - "30000"
+      - "--rtp-range-end"
+      - "36900"
+      - "--auto"
+    cap_add:
+      - SYS_NICE
+    restart: unless-stopped

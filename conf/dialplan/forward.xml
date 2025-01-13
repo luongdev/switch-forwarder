@@ -1,0 +1,12 @@
+<include>
+  <context name="public">
+    <extension name="forward">
+      <condition field="destination_number" expression="^(\d{6,15})$">
+        <action application="export" data="effective_caller_id_name=${caller_id_name}" />
+        <action application="export" data="effective_caller_id_number=${caller_id_number}" />
+        <action application="export" data="sip_h_X-accountcode=${sip_h_X-accountcode}" />
+        <action application="bridge" data="sofia/gateway/topub/$1" />
+      </condition>
+    </extension>
+  </context>
+</include>
