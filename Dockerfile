@@ -17,4 +17,4 @@ ENV DB_OPTS=""
 
 ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["tail", "-f", "/dev/null"]
+# CMD ["tail", "-f", "/dev/null"]
