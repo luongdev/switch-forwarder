@@ -35,7 +35,7 @@ if [ -z "$host" ] || [ -z "$port" ] || [ -z "$user" ] || [ -z "$password" ]; the
 fi
 
 if [ "$wait_for_ready" = true ]; then
-  echo "Waiting for database 'pgsql://$user@$host:$port/$dbname' ready: $max_wait_time sec(s)..."
+  echo "Waiting for database 'pgsql://$user:********@$host:$port' ready: $max_wait_time sec(s)..."
   start_time=$(date +%s)
   
   while true; do

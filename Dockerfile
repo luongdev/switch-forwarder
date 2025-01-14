@@ -1,6 +1,6 @@
 FROM simplefs/switch-base:1.10.12 AS base
 
-RUN apt update && apt install -y iproute2 curl
+RUN apt update && apt install -y iproute2 curl postgresql-client
 
 COPY bin /tmp/bin
 COPY conf /tmp/conf
@@ -16,5 +16,3 @@ ENV DB_NAME="switch"
 ENV DB_OPTS=""
 
 ENTRYPOINT ["/entrypoint.sh"]
-
-# CMD ["tail", "-f", "/dev/null"]

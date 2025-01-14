@@ -31,9 +31,9 @@ if [ "$FIRST_RUN" = "1" ]; then
     PUBLIC_IP=$(getip "public")
   fi
 
-  echo "Detect local_ip: $LOCAL_IP"
-  echo "Detect container_ip: $CONTAINER_IP"
-  echo "Detect public_ip: $PUBLIC_IP"
+  echo "Switch LOCAL_IP: $LOCAL_IP"
+  echo "Switch PUBLIC_IP: $PUBLIC_IP"
+  echo "Switch CONTAINER_IP: $CONTAINER_IP"
 
   ACL_CONF="$CONF_DIR/autoload_configs/acl.conf.xml"
 
@@ -51,7 +51,8 @@ if [ "$FIRST_RUN" = "1" ]; then
   DB_OPTS=${DB_OPTS:-}
 
   if [ "$DB_HOST" != "" ]; then
-    CORE_DSN="pgsql://hostaddr=$DB_HOST port=$DB_PORT user=$DB_USER password=$DB_PASS dbname=$DB_NAME options='$DB_OPTS'"
+    echo "Using database instance 'pgsql://$DB_USER@$DB_HOST:$DB_PORT/$DB_NAME'"
+    CORE_DSN="pgsql://hostaddr='$DB_HOST' port=$DB_PORT user='$DB_USER' password='$DB_PASS' dbname='$DB_NAME' options='$DB_OPTS' application_name='switch'"
     sed -i "2a <X-PRE-PROCESS cmd=\"set\" data=\"core_dsn=$CORE_DSN\"/>" "$CONF_DIR/vars_diff.xml"
     pgready -h $DB_HOST -p $DB_PORT -U $DB_USER -P $DB_PASS -t 15 -w
 
@@ -61,110 +62,132 @@ if [ "$FIRST_RUN" = "1" ]; then
   fi
 
   touch "$RUN_FILE"
+fi
 
-  if [ "$1" = 'freeswitch' ]; then
-    shift
+if [ "$1" = 'freeswitch' ]; then
+  shift
 
-    while :; do
-      case $1 in 
-      -g|--g711-only)
+  while :; do
+    case $1 in 
+    -g|--g711-only)
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/global_codec_prefs=.*\"/global_codec_prefs=PCMU,PCMA\"/g" "$CONF_DIR/vars.xml"
           sed -i -e "s/outbound_codec_prefs=.*\"/outbound_codec_prefs=PCMU,PCMA\"/g" "$CONF_DIR/vars.xml"
-        shift
-        ;;
+        fi
+      shift
+      ;;
 
-      --g711-only-alaw-preferred)
+    --g711-only-alaw-preferred)
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/global_codec_prefs=.*\"/global_codec_prefs=PCMA,PCMU\"/g" "$CONF_DIR/vars.xml"
           sed -i -e "s/outbound_codec_prefs=.*\"/outbound_codec_prefs=PCMA,PCMU\"/g" "$CONF_DIR/vars.xml"
-        shift
-        ;;
+        fi
+      shift
+      ;;
 
-      -e|--event-socket-port)
-        if [ -n "$2" ]; then
+    -e|--event-socket-port)
+      if [ -n "$2" ]; then
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/name=\"listen-port\" value=\"8021\"/name=\"listen-port\" value=\"$2\"/g" "$CONF_DIR/autoload_configs/event_socket.conf.xml"
         fi
         shift
-        shift
-        ;;
+      fi
+      shift
+      ;;
 
-      -a|--rtp-range-start)
-        if [ -n "$2" ]; then
+    -a|--rtp-range-start)
+      if [ -n "$2" ]; then
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/name=\"rtp-start-port\" value=\".*\"/name=\"rtp-start-port\" value=\"$2\"/g" "$CONF_DIR/autoload_configs/switch.conf.xml"
         fi
         shift
-        shift
-        ;;
+      fi
+      shift
+      ;;
 
-      -z|--rtp-range-end)
-        if [ -n "$2" ]; then
+    -z|--rtp-range-end)
+      if [ -n "$2" ]; then
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/name=\"rtp-end-port\" value=\".*\"/name=\"rtp-end-port\" value=\"$2\"/g" "$CONF_DIR/autoload_configs/switch.conf.xml"
         fi
         shift
-        shift
-        ;;
+      fi
+      shift
+      ;;
 
-      --ext-rtp-ip)
-        if [ -n "$2" ]; then
+    --ext-rtp-ip)
+      if [ -n "$2" ]; then
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/ext_rtp_ip=.*\"/ext_rtp_ip=$2\"/g" "$CONF_DIR/vars_diff.xml"
         fi
         shift
-        shift
-        ;;
+      fi
+      shift
+      ;;
 
-      --ext-sip-ip)
-        if [ -n "$2" ]; then
+    --ext-sip-ip)
+      if [ -n "$2" ]; then
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/ext_sip_ip=.*\"/ext_sip_ip=$2\"/g" "$CONF_DIR/vars_diff.xml"
         fi
         shift
-        shift
-        ;;
+      fi
+      shift
+      ;;
 
-      -p|--password)
-        if [ -n "$2" ]; then
+    -p|--password)
+      if [ -n "$2" ]; then
+        if [ "$FIRST_RUN" = "1" ]; then
           echo "$2" > "$PASS_FILE"
           sed -i -e "s/name=\"password\" value=\"Default#Switch@6699\"/name=\"password\" value=\"$2\"/g" "$CONF_DIR/autoload_configs/event_socket.conf.xml"
         fi
         shift
-        shift
-        ;;
+      fi
+      shift
+      ;;
 
-      --codec-list)
-        if [ -n "$2" ]; then
+    --codec-list)
+      if [ -n "$2" ]; then
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/global_codec_prefs=.*\"/global_codec_prefs=$2\"/g" "$CONF_DIR/vars.xml"
           sed -i -e "s/outbound_codec_prefs=.*\"/outbound_codec_prefs=$2\"/g" "$CONF_DIR/vars.xml"
         fi
         shift
-        shift
-        ;;
+      fi
+      shift
+      ;;
 
-      -l|--log-level)
-        if [ -n "$2" ]; then
+    -l|--log-level)
+      if [ -n "$2" ]; then
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i -e "s/name=\"loglevel\" value=\".*\"/name=\"loglevel\" value=\"$2\"/g" "$CONF_DIR/autoload_configs/switch.conf.xml"
         fi
         shift
-        shift
-        ;;
-      --auto)
+      fi
+      shift
+      ;;
+    --auto)
+        if [ "$FIRST_RUN" = "1" ]; then
           sed -i '2a <X-PRE-PROCESS cmd="set" data="local_ip_v4='$LOCAL_IP'"/>' "$CONF_DIR/vars_diff.xml"
           if [ "$PUBLIC_IP" != "$LOCAL_IP" ]; then
             sed -i -e "s/ext_sip_ip=.*\"/ext_sip_ip=$PUBLIC_IP\"/g" "$CONF_DIR/vars_diff.xml"
             sed -i -e "s/ext_rtp_ip=.*\"/ext_rtp_ip=$PUBLIC_IP\"/g" "$CONF_DIR/vars_diff.xml"
           fi
-        shift
-        ;;
-      --)
-        shift
-        break
-        ;;
+        fi
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
 
-      *)
-        break
-      esac
+    *)
+      break
+    esac
 
-    done
+  done
 
-    exec freeswitch "$@"
-  fi
+  exec freeswitch "$@"
 fi
 
 exec "$@"
