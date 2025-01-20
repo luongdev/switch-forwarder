@@ -5,9 +5,9 @@
       <domain name="all" alias="true" parse="false" />
     </domains>
 
-    <gateways>
+    <!-- <gateways>
       <X-PRE-PROCESS cmd="include" data="nic1/*.xml"/>
-    </gateways>
+    </gateways> -->
 
     <settings>
       <param name="sip-trace" value="no" />
@@ -15,6 +15,9 @@
       <param name="dtmf-type" value="rfc2833" />
       <param name="rtp-ip" value="$${local_ip_v4}" />
       <param name="sip-ip" value="$${local_ip_v4}" />
+      <param name="ext-rtp-ip" value="auto-nat" />
+      <param name="ext-sip-ip" value="auto-nat" />
+      <param name="aggressive-nat-detection" value="true"/>
       <param name="sip-port" value="$${nic1_port}" />
       <param name="username" value="switch" />
       <param name="apply-inbound-acl" value="providers" />
@@ -28,10 +31,6 @@
       <param name="manage-presence" value="false" />
       <param name="enable-3pcc" value="true" />
       <param name="tls" value="false" />
-
-      <param name="ext-rtp-ip" value="$${ext_rtp_ip}" />
-      <param name="ext-sip-ip" value="$${ext_sip_ip}" />
-
       <param name="odbc-dsn" value="$${core_dsn}"/>
     </settings>
   </profile>

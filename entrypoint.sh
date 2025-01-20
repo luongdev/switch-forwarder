@@ -5,19 +5,32 @@ RUN_FILE="/var/run/.freeswitch"
 PASS_FILE="/var/run/.pass"
 CONF_DIR="/etc/switch/conf"
 
-mkdir -p /opt/switch/conf
-rm -rf "$CONF_DIR"
-
 FIRST_RUN="0"
 if [ ! -e $RUN_FILE ]; then
   FIRST_RUN="1"
 fi
 
 if [ "$FIRST_RUN" = "1" ]; then
+
+  rm -rf                                    "$CONF_DIR"
+  mkdir -p                                  /opt/switch/conf
+
   mv /tmp/bin/*                             /usr/bin/
-# mv "$CONF_DIR"                            "$CONF_DIR.bak"
   mv /tmp/conf                              "$CONF_DIR" 
-  cp "$CONF_DIR/vars.xml"                   /opt/switch/conf/vars.xml
+
+  if [ ! -e "/opt/switch/conf/vars.xml" ]; then
+    cp "$CONF_DIR/vars.xml"                   /opt/switch/conf/vars.xml
+  fi
+
+  if [ "$FORWARD_ADDR" != "" ]; then
+    echo "Using forward ip 1: $FORWARD_ADDR"
+    sed -i "2a <X-PRE-PROCESS cmd=\"set\" data=\"forward_addr=$FORWARD_ADDR\"/>" /opt/switch/conf/vars.xml
+  fi
+
+  # if [ "$FORWARD_ADDR2" != "" ]; then
+  #   echo "Using forward ip 2: $FORWARD_ADDR2"
+  #   sed -i "2a <X-PRE-PROCESS cmd=\"set\" data=\"forward_addr2=$FORWARD_ADDR2\"/>" /opt/switch/conf/vars.xml
+  # fi
 
   echo "Default#Switch@6699" > "$PASS_FILE"
 

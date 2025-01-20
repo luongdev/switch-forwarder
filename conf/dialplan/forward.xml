@@ -1,11 +1,16 @@
 <include>
   <context name="public">
-    <extension name="forward">
-      <condition field="destination_number" expression="^(\d{6,15})$">
-        <action application="export" data="effective_caller_id_name=${caller_id_name}" />
-        <action application="export" data="effective_caller_id_number=${caller_id_number}" />
-        <action application="export" data="sip_h_X-accountcode=${sip_h_X-accountcode}" />
-        <action application="bridge" data="sofia/gateway/topub/$1" />
+    <extension name="forwarder">
+      <condition field="destination_number" expression="^(\d{8,12})$">
+        <action application="unset" data="call_timeout"/>
+        <action application="set" data="hangup_after_bridge=true"/>
+        <action application="set" data="sip_contact_user=${sip_from_user}" />
+        <action application="set" data="effective_caller_id_name=${sip_from_user}"/>
+		    <action application="set" data="effective_caller_id_number=${sip_from_user}"/>
+        <!-- <action application="set" data="origination_caller_id_number=${sip_from_user}" /> -->
+        <!-- <action application="set" data="origination_caller_id_number=${sip_from_user}" /> -->
+        <action application="bridge" data="sofia/nic1/$1@$${forward_addr}" />
+        <!-- <action application="bridge" data="sofia/nic1/$1@$${forward_addr2}" /> -->
       </condition>
     </extension>
   </context>

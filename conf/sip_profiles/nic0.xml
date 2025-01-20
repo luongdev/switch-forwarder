@@ -24,7 +24,6 @@
       <param name="manage-presence" value="false" />
       <param name="enable-3pcc" value="true" />
       <param name="tls" value="false" />
-
       <param name="odbc-dsn" value="$${core_dsn}"/>
     </settings>
   </profile>
